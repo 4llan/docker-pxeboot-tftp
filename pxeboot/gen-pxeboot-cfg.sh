@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 #
 #export SRC_DIR=${SRC_DIR:-$HOST_SRC_DIR}
@@ -32,77 +32,89 @@ then
     mkdir $CFG_DIR
 fi
 
-function syslinux {
+syslinux() {
     local version=6.03
     local label=syslinux-$version
-    local files=(
-        "bios/com32/menu/menu.c32"
-        "bios/com32/elflink/ldlinux/ldlinux.c32"
-        "bios/com32/libutil/libutil.c32"
-        "bios/core/pxelinux.0"
-    )
+
+    set -- "bios/com32/menu/menu.c32" \
+    "bios/com32/elflink/ldlinux/ldlinux.c32" \
+    "bios/com32/libutil/libutil.c32" \
+    "bios/core/pxelinux.0"
 
     {
         ##wget -q https://mirrors.edge.kernel.org/pub/linux/utils/boot/syslinux/$label.zip -O $TEMPDIR/$label.zip &&
-        unzip -q -o -j $TEMPDIR/$label "${files[@]}" -d $TEMPDIR
-    } || return -1
+        unzip -q -o -j $TEMPDIR/$label "$@" -d $TEMPDIR
+    } || return 255
 }
 
-function memtest {
+memtest() {
+    local passwd=${1:-0}
     local version=5.01
     local label=memtest86+-$version
     local kernel=/$label/$label
 
+    if [ ! -d $TEMPDIR/$label ];
+    then
+        mkdir $TEMPDIR/$label
+    fi
     {
         wget -q http://www.memtest.org/download/$version/$label.zip -O $TEMPDIR/$label.zip &&
-        unzip -q -o $TEMPDIR/$label -d $TEMPDIR/$label &&
-        mv -f $TEMPDIR/$label/*.bin $TEMPDIR/$label/$label
-    } || return -1
+        unzip -q -o $TEMPDIR/$label.zip -d $TEMPDIR/$label &&
+        mv -f $TEMPDIR/$label/$label.bin $TEMPDIR/$label/$label
+    } || return 255
 
-    label $label "Memtest86+ $version" $kernel "" ${1:-0}
+    label $label "Memtest86+ $version" $kernel "" $passwd
 }
 
-function clonezilla {
+clonezilla() {
+    local passwd=${1:-0}
     local version=2.6.6-15 #2.5.6-22
     local arch=amd64
     local label=clonezilla-live-$version-$arch
     local kernel=/$label/vmlinuz
     local append="initrd=$label/initrd.img boot=live username=user union=overlay config components quiet noswap edd=on nomodeset nodmraid locales= keyboard-layouts= ocs_live_run=\"ocs-live-general\" ocs_live_extra_param=\"\" ocs_live_batch=no net.ifnames=0 nosplash noprompt vga=788 fetch=tftp://$PXE_IP_ADDR/$label/filesystem.squashfs"
-    local files=(
-        "live/vmlinuz"
-        "live/initrd.img"
-        "live/filesystem.squashfs"
-    )
 
+    set -- "live/vmlinuz" \
+    "live/initrd.img" \
+    "live/filesystem.squashfs"
+
+    if [ ! -d $TEMPDIR/$label ];
+    then
+        mkdir $TEMPDIR/$label
+    fi
     {
         #wget -q https://sourceforge.net/projects/clonezilla/files/clonezilla_live_stable/$version/$label.zip/download -O $TEMPDIR/$label.zip &&
-        unzip -q -o -j $TEMPDIR/$label "${files[@]}" -d $TEMPDIR/$label
-    } || return -1
+        unzip -q -o -j $TEMPDIR/$label.zip "$@" -d $TEMPDIR/$label
+    } || return 255
 
-    label $label "Clonezilla Live $version" $kernel "$append" ${1:-0}
+    label $label "Clonezilla Live $version" $kernel "$append" $passwd
 }
 
-function gparted {
+gparted() {
+    local passwd=${1:-0}
     local version=1.1.0-1 #0.33.0-1
     local arch=amd64
     local label=gparted-live-$version-$arch
     local kernel=/$label/vmlinuz
     local append="initrd=$label/initrd.img boot=live config components union=overlay username=user noswap noeject ip= vga=788 fetch=tftp://$PXE_IP_ADDR/$label/filesystem.squashfs"
-    local files=(
-        "live/vmlinuz"
-        "live/initrd.img"
-        "live/filesystem.squashfs"
-    )
 
+    set -- "live/vmlinuz" \
+    "live/initrd.img" \
+    "live/filesystem.squashfs"
+
+    if [ ! -d $TEMPDIR/$label ];
+    then
+        mkdir $TEMPDIR/$label
+    fi
     {
         #wget -q https://sourceforge.net/projects/gparted/files/gparted-live-stable/$version/$label.zip/download -O $TEMPDIR/$label.zip &&
-        unzip -q -o -j $TEMPDIR/$label "${files[@]}" -d $TEMPDIR/$label
-    } || return -1
+        unzip -q -o -j $TEMPDIR/$label.zip "$@" -d $TEMPDIR/$label
+    } || return 255
 
-    label $label "Gparted Live $version" $kernel "$append" ${1:-0}
+    label $label "Gparted Live $version" $kernel "$append" $passwd
 }
 
-function main {
+main() {
     syslinux &&
     header "$PXE_TITLE" "$PXE_PASSWD" &&
     #label "teste" "123" "kernel" "append" 0

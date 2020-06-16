@@ -1,34 +1,33 @@
-#!/bin/bash
-
-if [[ $(basename "$0") = $(basename "$BASH_SOURCE") ]];
+#!/bin/sh
+if [ ${0##*/} = "pxeboot-cfg.sh" ];
 then
     echo "This script is meant to be sourced"
     exit 1
 fi
 
-function header {
+header() {
     echo "DEFAULT menu.c32"
     echo "PROMPT 0"
     echo ""
     echo "MENU TITLE ${1:-"Default title"}"
-    if [[ ! -z $2 ]];
+    if [ -n "$2" ];
     then
         echo "MENU MASTER PASSWD $2"
     fi
 }
 
-function label {
-    if [[ $1 && $2 && $3 ]];
+label() {
+    if [ "$1" ] && [ "$2" ] && [ "$3" ];
     then
         echo ""
         echo "LABEL $1"
-        if [[ $5 -eq 1 ]];
+        if [ "$5" -eq 1 ];
         then
             echo "  MENU PASSWD"
         fi
         echo "  MENU LABEL $2"
         echo "  KERNEL $3"
-        if [[ ! -z $4 ]];
+        if [ -n "$4" ];
         then
             echo "  APPEND $4"
         fi
