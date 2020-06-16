@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+    tftp:
+        build: tftp
+        ports:
+            - "69:69/udp"
+        volumes:
+            - tftp-data:/var/tftpboot:ro
+        restart: unless-stopped
+
+    #syslinux:
+    #    build: syslinux
+    #    volumes:
+    #        - tftp-data:/shared
+    #    command: sh -c "unzip /tmp/*.zip -d /shared"
+
+    pxeboot:
+        image: alpine:latest
+        env_file: .env_pxeboot
+        volumes:
+            - ./pxeboot:/root/pxeboot
+        command: sh -c "echo teste $$HOST_IP"
+
+volumes:
+    tftp-data:
