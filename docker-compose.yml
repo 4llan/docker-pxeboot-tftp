@@ -15,7 +15,7 @@ services:
         volumes:
             - ./pxeboot:/pxeboot
             - tftp-data:/tftpboot
-        command: sh -c "/pxeboot/gen-pxeboot-cfg.sh && cp -rf /pxeboot/tmp/* /tftpboot/"
+        command: sh -c "rm -rf /tftpboot/* && /pxeboot/gen-pxeboot-cfg.sh && cp -rf /pxeboot/tmp/* /tftpboot/ && rm /tftpboot/*.zip"
 
 volumes:
     tftp-data:

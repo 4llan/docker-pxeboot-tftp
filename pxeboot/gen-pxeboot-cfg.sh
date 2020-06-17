@@ -1,19 +1,12 @@
 #!/bin/sh
 
-#
-#export SRC_DIR=${SRC_DIR:-$HOST_SRC_DIR}
-#export CACHE_DIR=${CACHE_DIR:-$HOST_CACHE_DIR}
-#export CCACHE_DIR=$CACHE_DIR/ccache
-#export DOCKER_RUN_VOLUME_ARGS="-v $HOST_SRC_DIR:$SRC_DIR -v $HOST_CACHE_DIR:$CACHE_DIR"
-#export DOCKER_RUN_ENV_ARGS="-e SRC_DIR=$SRC_DIR -e CACHE_DIR=$CACHE_DIR -e PULL_REQUEST=$PULL_REQUEST -e COMMIT_RANGE=$COMMIT_RANGE -e JOB_NUMBER=$JOB_NUMBER -e BUILD_TARGET=$BUILD_TARGET"
-#export DOCKER_RUN_ARGS="$DOCKER_RUN_VOLUME_ARGS $DOCKER_RUN_ENV_ARGS"
-#export DOCKER_RUN_IN_BUILDER="docker run -t --rm -w $SRC_DIR $DOCKER_RUN_ARGS $BUILDER_IMAGE_NAME"
-#
-
 BASEDIR=$(dirname $0)
 TEMPDIR=$BASEDIR/tmp
 CFG_FILE=$TEMPDIR/pxeboot.cfg/default
 CFG_DIR=$(dirname $CFG_FILE)
+
+find $TEMPDIR -type f -not -name '*.zip' -delete
+find $TEMPDIR -type d -mindepth 1 -delete
 
 export PXE_IP_ADDR
 export PXE_TITLE=${PXE_TITLE:-"pxeboot@docker"}
@@ -48,7 +41,7 @@ syslinux() {
     "bios/core/pxelinux.0"
 
     {
-        ##wget -q https://mirrors.edge.kernel.org/pub/linux/utils/boot/syslinux/$label.zip -O $TEMPDIR/$label.zip &&
+        [ ! -f $TEMPDIR/$label.zip ] && wget -q https://mirrors.edge.kernel.org/pub/linux/utils/boot/syslinux/$label.zip -O $TEMPDIR/$label.zip
         unzip -q -o -j $TEMPDIR/$label "$@" -d $TEMPDIR
     } || return 255
 }
@@ -68,7 +61,7 @@ memtest() {
         mkdir $TEMPDIR/$label
     fi
     {
-        wget -q http://www.memtest.org/download/$version/$label.zip -O $TEMPDIR/$label.zip &&
+        [ ! -f $TEMPDIR/$label.zip ] && wget -q http://www.memtest.org/download/$version/$label.zip -O $TEMPDIR/$label.zip
         unzip -q -o $TEMPDIR/$label.zip -d $TEMPDIR/$label &&
         mv -f $TEMPDIR/$label/$label.bin $TEMPDIR/$label/$label
     } || return 255
@@ -97,7 +90,7 @@ clonezilla() {
         mkdir $TEMPDIR/$label
     fi
     {
-        #wget -q https://sourceforge.net/projects/clonezilla/files/clonezilla_live_stable/$version/$label.zip/download -O $TEMPDIR/$label.zip &&
+        [ ! -f $TEMPDIR/$label.zip ] && wget -q https://sourceforge.net/projects/clonezilla/files/clonezilla_live_stable/$version/$label.zip/download -O $TEMPDIR/$label.zip
         unzip -q -o -j $TEMPDIR/$label.zip "$@" -d $TEMPDIR/$label
     } || return 255
 
@@ -125,7 +118,7 @@ gparted() {
         mkdir $TEMPDIR/$label
     fi
     {
-        #wget -q https://sourceforge.net/projects/gparted/files/gparted-live-stable/$version/$label.zip/download -O $TEMPDIR/$label.zip &&
+        [ ! -f $TEMPDIR/$label.zip ] && wget -q https://sourceforge.net/projects/gparted/files/gparted-live-stable/$version/$label.zip/download -O $TEMPDIR/$label.zip
         unzip -q -o -j $TEMPDIR/$label.zip "$@" -d $TEMPDIR/$label
     } || return 255
 
@@ -135,14 +128,12 @@ gparted() {
 main() {
     syslinux &&
     header "$PXE_TITLE" "$PXE_PASSWD" &&
-    #label "teste" "123" "kernel" "append" 0
     memtest 1 &&
     clonezilla 1 &&
     gparted 1
 }
 
 main > $CFG_FILE || {
-    #echo "Oops"
     rm -rf $CFG_DIR
     exit 1
 }
