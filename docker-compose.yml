@@ -9,18 +9,13 @@ services:
             - tftp-data:/var/tftpboot:ro
         restart: unless-stopped
 
-    #syslinux:
-    #    build: syslinux
-    #    volumes:
-    #        - tftp-data:/shared
-    #    command: sh -c "unzip /tmp/*.zip -d /shared"
-
     pxeboot:
         image: alpine:latest
         env_file: .env_pxeboot
         volumes:
-            - ./pxeboot:/root/pxeboot
-        command: sh -c "echo teste $$HOST_IP"
+            - ./pxeboot:/pxeboot
+            - tftp-data:/tftpboot
+        command: sh -c "/pxeboot/gen-pxeboot-cfg.sh && cp -rf /pxeboot/tmp/* /tftpboot/"
 
 volumes:
     tftp-data:

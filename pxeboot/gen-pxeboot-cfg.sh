@@ -15,9 +15,15 @@ TEMPDIR=$BASEDIR/tmp
 CFG_FILE=$TEMPDIR/pxeboot.cfg/default
 CFG_DIR=$(dirname $CFG_FILE)
 
-PXE_IP_ADDR="192.168.80.111"
-PXE_TITLE="allan - teste"
-PXE_PASSWD="blabla"
+export PXE_IP_ADDR
+export PXE_TITLE=${PXE_TITLE:-"pxeboot@docker"}
+export PXE_PASSWD
+
+if [ -z $PXE_IP_ADDR ];
+then
+    echo "You need to set PXE_IP_ADDR env var"
+    exit 2
+fi
 
 source "$BASEDIR/pxeboot-cfg.sh"
 
@@ -52,6 +58,10 @@ memtest() {
     local version=5.01
     local label=memtest86+-$version
     local kernel=/$label/$label
+    if [ -z $PXE_PASSWD ];
+    then
+        passwd=0
+    fi
 
     if [ ! -d $TEMPDIR/$label ];
     then
@@ -73,6 +83,10 @@ clonezilla() {
     local label=clonezilla-live-$version-$arch
     local kernel=/$label/vmlinuz
     local append="initrd=$label/initrd.img boot=live username=user union=overlay config components quiet noswap edd=on nomodeset nodmraid locales= keyboard-layouts= ocs_live_run=\"ocs-live-general\" ocs_live_extra_param=\"\" ocs_live_batch=no net.ifnames=0 nosplash noprompt vga=788 fetch=tftp://$PXE_IP_ADDR/$label/filesystem.squashfs"
+    if [ -z $PXE_PASSWD ];
+    then
+        passwd=0
+    fi
 
     set -- "live/vmlinuz" \
     "live/initrd.img" \
@@ -97,6 +111,10 @@ gparted() {
     local label=gparted-live-$version-$arch
     local kernel=/$label/vmlinuz
     local append="initrd=$label/initrd.img boot=live config components union=overlay username=user noswap noeject ip= vga=788 fetch=tftp://$PXE_IP_ADDR/$label/filesystem.squashfs"
+    if [ -z $PXE_PASSWD ];
+    then
+        passwd=0
+    fi
 
     set -- "live/vmlinuz" \
     "live/initrd.img" \
