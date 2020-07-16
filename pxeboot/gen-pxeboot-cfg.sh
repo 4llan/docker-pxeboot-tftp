@@ -1,9 +1,16 @@
 #!/bin/sh
+#
+# Generate Syslinux "pxeboot.cfg/default" menu file.
+#
+# Default entries:
+# - Memtest86+
+# - Clonezilla
+# - GParted
 
 BASEDIR=$(dirname $0)
 TEMPDIR=$BASEDIR/tmp
-CFG_FILE=$TEMPDIR/pxeboot.cfg/default
-CFG_DIR=$(dirname $CFG_FILE)
+CFGFILE=$TEMPDIR/pxeboot.cfg/default
+CFGDIR=$(dirname $CFGFILE)
 
 export PXE_IP_ADDR
 export PXE_TITLE=${PXE_TITLE:-"pxeboot@docker"}
@@ -21,16 +28,21 @@ find $TEMPDIR -type f -not -name '*.zip' -delete
 find $TEMPDIR -mindepth 1 -type d -delete
 
 [ ! -d $TEMPDIR ] && mkdir $TEMPDIR
-[ ! -d $CFG_DIR ] && mkdir $CFG_DIR
+[ ! -d $CFGDIR ] && mkdir $CFGDIR
 
+############################################################
+# Download and extract Syslinux necessary files to $TEMPDIR
+# Arguments:
+#   - [$1] Syslinux version, string
+############################################################
 syslinux() {
     local version=${1:-"6.03"}
     local label=syslinux-$version
 
     set -- "bios/com32/menu/menu.c32" \
-    "bios/com32/elflink/ldlinux/ldlinux.c32" \
-    "bios/com32/libutil/libutil.c32" \
-    "bios/core/pxelinux.0"
+           "bios/com32/elflink/ldlinux/ldlinux.c32" \
+           "bios/com32/libutil/libutil.c32" \
+           "bios/core/pxelinux.0"
 
     {
         [ ! -f $TEMPDIR/$label.zip ] &&
@@ -40,6 +52,12 @@ syslinux() {
     } || return 255
 }
 
+############################################################
+# Download, extract and echoes menu entry for Memtest86+
+# Arguments:
+#   - [$1] Password protected, int (1 == ON)
+#   - [$2] Version, string
+############################################################
 memtest() {
     local passwd=${1:-0} && [ -z $PXE_PASSWD ] && passwd=0
     local version=${2:-"5.01"}
@@ -60,6 +78,13 @@ memtest() {
     label $label "Memtest86+ $version" $kernel "" $passwd
 }
 
+############################################################
+# Download, extract and echoes menu entry for Clonezilla
+# Arguments:
+#   - [$1] Password protected, int (1 == ON)
+#   - [$2] Version, string
+#   - [$3] Architecture, string (amd64 | i686 | i686-pae)
+############################################################
 clonezilla() {
     local passwd=${1:-0} && [ -z $PXE_PASSWD ] && passwd=0
     local version=${2:-"2.5.6-22"}
@@ -69,8 +94,8 @@ clonezilla() {
     local append="initrd=$label/initrd.img boot=live username=user union=overlay config components quiet noswap edd=on nomodeset nodmraid locales= keyboard-layouts= ocs_live_run=\"ocs-live-general\" ocs_live_extra_param=\"\" ocs_live_batch=no net.ifnames=0 nosplash noprompt vga=788 fetch=tftp://$PXE_IP_ADDR/$label/filesystem.squashfs"
 
     set -- "live/vmlinuz" \
-    "live/initrd.img" \
-    "live/filesystem.squashfs"
+           "live/initrd.img" \
+           "live/filesystem.squashfs"
 
     {
         [ ! -d $TEMPDIR/$label ] &&
@@ -85,6 +110,13 @@ clonezilla() {
     label $label "Clonezilla Live $version" $kernel "$append" $passwd
 }
 
+############################################################
+# Download, extract and echoes menu entry for GParted
+# Arguments:
+#   - [$1] Password protected, int (1 == ON)
+#   - [$2] Version, string
+#   - [$3] Architecture, string (amd64 | i686 | i686-pae)
+############################################################
 gparted() {
     local passwd=${1:-0} && [ -z $PXE_PASSWD ] && passwd=0
     local version=${2:-"0.33.0-1"}
@@ -94,8 +126,8 @@ gparted() {
     local append="initrd=$label/initrd.img boot=live config components union=overlay username=user noswap noeject ip= vga=788 fetch=tftp://$PXE_IP_ADDR/$label/filesystem.squashfs"
 
     set -- "live/vmlinuz" \
-    "live/initrd.img" \
-    "live/filesystem.squashfs"
+           "live/initrd.img" \
+           "live/filesystem.squashfs"
 
     {
         [ ! -d $TEMPDIR/$label ] &&
@@ -118,7 +150,7 @@ main() {
     gparted 1 "1.1.0-1" "amd64"
 }
 
-main > $CFG_FILE || {
-    rm -rf $CFG_DIR
+main > $CFGFILE || {
+    rm -rf $CFGDIR
     exit 1
 }
