@@ -4,7 +4,8 @@ services:
     tftp:
         build: tftp
         ports:
-            - "69:69/udp"
+            - "0.0.0.0:69:69/udp"
+        network_mode: "host"
         volumes:
             - tftp-data:/var/tftpboot:ro
         restart: unless-stopped
