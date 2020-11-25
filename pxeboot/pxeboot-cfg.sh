@@ -5,7 +5,7 @@
 # https://wiki.syslinux.org/wiki/index.php?title=Menu
 # https://wiki.syslinux.org/wiki/index.php?title=Comboot/menu.c32
 
-if [ ${0##*/} = "pxeboot-cfg.sh" ];
+if [ ${0##*/} == "pxeboot-cfg.sh" ];
 then
     echo "This script is meant to be sourced"
     exit 1
