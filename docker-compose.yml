@@ -5,17 +5,16 @@ services:
         build: tftp
         ports:
             - "0.0.0.0:69:69/udp"
-        network_mode: "host"
         volumes:
             - tftp-data:/var/tftpboot:ro
         restart: unless-stopped
 
     pxeboot:
-        image: alpine:latest
+        image: alpine:3.14
         env_file: .env_pxeboot
         volumes:
-            - ./pxeboot:/pxeboot
-            - tftp-data:/tftpboot
+            - ./pxeboot:/pxeboot:z
+            - tftp-data:/tftpboot:z
         command: sh -c "rm -rf /tftpboot/* && /pxeboot/gen-pxeboot-cfg.sh && cp -rf /pxeboot/tmp/* /tftpboot/ && rm /tftpboot/*.zip"
 
 volumes:
