@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/sh -x
 #
-# Generate Syslinux "pxeboot.cfg/default" menu file.
+# Generate Syslinux "pxelinux.cfg/default" menu file.
 #
 # Default entries:
 # - Memtest86+
@@ -9,7 +9,7 @@
 
 BASEDIR=$(dirname $0)
 TEMPDIR=$BASEDIR/tmp
-CFGFILE=$TEMPDIR/pxeboot.cfg/default
+CFGFILE=$TEMPDIR/pxelinux.cfg/default
 CFGDIR=$(dirname $CFGFILE)
 
 export PXE_IP_ADDR
